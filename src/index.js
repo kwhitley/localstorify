@@ -93,7 +93,7 @@ export class LocalStorify {
     // then add item
     this.addItem(entry)
 
-    return localStorage.setItem(key, JSON.stringify(value))
+    return localStorage.setItem(key, value)
   }
 
   getItem(key) {
