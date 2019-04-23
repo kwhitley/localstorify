@@ -1,85 +1,109 @@
-import { useState, useEffect } from 'react'
+const MAX_LOCALSTORAGESPACE = 15 * 1024 * 1024
+const TOLERANCE = 0.00001
+const LIMIT_LOCALSTORAGE = MAX_LOCALSTORAGESPACE * TOLERANCE
 
-// prefix for localStorage
-const GLOBALSTORAGE_PREFIX = '[@kwhitley/use-store]'
+export class LocalStorifyEntry {
+  constructor({ key, value }) {
+    this.key = key
+    this.size = (typeof value === 'string' ? value : JSON.stringify(value)).length + key.toString().length
+    this.created = new Date()
+    this.accessed = new Date()
+  }
+}
 
 // individual Store implementation for tracking values/setters
-export class Store {
-  constructor({ value, namespace, options }) {
-    this.state = value
+export class LocalStorify {
+  index = {}
+  items = []
+  collected = 0
 
-    if (options.persist) {
-      try {
-        let stored = localStorage.getItem(GLOBALSTORAGE_PREFIX + namespace)
-        if (stored !== null) {
-          // console.log(GLOBALSTORAGE_PREFIX + namespace, 'found in localStorage, setting to', this.state)
-          this.state = JSON.parse(stored)
-        } else {
-          // console.warn(GLOBALSTORAGE_PREFIX + namespace, 'not found in localStorage, setting to', this.state)
-        }
-      } catch(err) {
-        // console.warn(GLOBALSTORAGE_PREFIX + namespace, 'not found in localStorage, setting to', this.state)
-      }
-    }
+  constructor() {
+    Object.keys(localStorage).forEach(key => {
+      let value = localStorage.getItem(key)
+      this.addItem(new LocalStorifyEntry({ key, value }))
 
-    this.options = options
-    this.namespace = namespace
-    this.setters = []
+      // console.log('value of', key, 'is', value)
+    })
   }
 
-  setState = (value) => {
-    this.state = value
-    if (this.options.persist) {
-      // console.log('should persist value', value, 'to namespace', GLOBALSTORAGE_PREFIX + this.namespace)
-      localStorage.setItem(GLOBALSTORAGE_PREFIX + this.namespace, JSON.stringify(value))
+  get latest() {
+    return items[0]
+  }
+
+  get oldest() {
+    return items[items.length-1]
+  }
+
+  get length() {
+    return this.items.length
+  }
+
+  get size() {
+    return this.items.reduce((total, entry) =>  total + entry.size, 0)
+  }
+
+  addItem(entry) {
+    // add to array
+    this.items.unshift(entry)
+
+    // add to index
+    this.index[entry.key] = entry
+
+    console.log('adding entry', entry)
+  }
+
+  shrinkTo(targetSize) {
+    let items = this.items.sort((a, b) => a.accessed < b.accessed ? -1 : (a.accessed > b.accessed ? 1 : 0))
+    let attemptsRemaining = 1000
+
+    console.log('removing from sorted array', items.map(i => i.key))
+
+    console.log('shrinking to', targetSize, 'from', this.size)
+    while (this.size > targetSize && attemptsRemaining) {
+      let orphan = this.items.pop()
+      delete this.index[orphan.key]
+      console.log('removing entry', orphan)
+
+      this.collected++
+      this.attemptsRemaining--
     }
-    this.setters.forEach(setter => setter(this.state))
+  }
+
+  setItem(key, value) {
+    let entry = new LocalStorifyEntry({ key, value })
+    let targetSpace = LIMIT_LOCALSTORAGE - entry.size
+    let hasEnoughSpace = this.size < targetSpace
+
+    console.log({
+      LIMIT_LOCALSTORAGE,
+      targetSpace,
+      entrySize: entry.size,
+      currentSize: this.size,
+    })
+
+    if (targetSpace < 0) {
+      console.log('not enough space to add item', entry)
+
+      return false
+    }
+
+    // make space if not enough available
+    !hasEnoughSpace && this.shrinkTo(targetSpace)
+
+    // then add item
+    this.addItem(entry)
+
+    return localStorage.setItem(key, JSON.stringify(value))
+  }
+
+  getItem(key) {
+    let entry = localStorage.getItem(key)
+  }
+
+  clear() {
+    localStorage.clear()
+    this.index = {}
   }
 }
 
-// namespaced index of requested Stores
-export class GlobalStore {
-  set = (namespace, value, options = {}) => {
-    if (this.hasOwnProperty(namespace)) {
-      this[namespace].setState(value)
-    } else {
-      this[namespace] = new Store({ value, options, namespace })
-    }
-  }
-
-  clear = (namespace) => {
-    localStorage.removeItem(GLOBALSTORAGE_PREFIX + namespace)
-  }
-
-  persist = (...args) => this.set(...args, { persist: true })
-}
-
-// shared instantiation of GlobalStore
-export const globalStore = new GlobalStore()
-
-// the actual hook
-export function useStore(namespace, value, options = {}) {
-  let whichStore = undefined
-
-  if (!namespace) {
-    throw new Error('no namespace provided to useStore... try using useState() instead?')
-  }
-
-  if (globalStore.hasOwnProperty(namespace)) {
-    whichStore = globalStore[namespace]
-  } else {
-    whichStore = globalStore[namespace] = new Store({ value, options, namespace })
-  }
-
-  const [ state, set ] = useState(whichStore.state)
-
-  if (!whichStore.setters.includes(set)) {
-    whichStore.setters.push(set)
-  }
-
-  useEffect(() => () => {
-    whichStore.setters = whichStore.setters.filter(setter => setter !== set)
-  }, [])
-
-  return [ state, whichStore.setState ]
-}
+export default new LocalStorify()
