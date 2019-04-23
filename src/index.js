@@ -97,7 +97,7 @@ export class LocalStorify {
   }
 
   getItem(key) {
-    let entry = localStorage.getItem(key)
+    return localStorage.getItem(key)
   }
 
   clear() {
