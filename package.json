@@ -1,6 +1,6 @@
 {
   "name": "@kwhitley/localstorify",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "localStorage that avoids storage limit failures",
   "keywords": [
     "localStorage",
@@ -13,9 +13,9 @@
     "prebuild": "rm -rf build",
     "build": "babel src --ignore '**/*.spec.js' --out-dir build -d",
     "test": "jest --watch",
-    "release:major": "yarn build && release --major --src=build --push",
-    "release:minor": "yarn build && release --minor --src=build --push",
-    "release:patch": "yarn build && release --patch --src=build --push"
+    "release:major": "yarn build && release --major --src=build --push --public",
+    "release:minor": "yarn build && release --minor --src=build --push --public",
+    "release:patch": "yarn build && release --patch --src=build --push --public"
   },
   "author": "Kevin R. Whitley <krwhitley@gmail.com>",
   "license": "MIT",
