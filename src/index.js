@@ -17,7 +17,9 @@ export class LocalStorify {
   items = []
   collected = 0
 
-  constructor() {
+  constructor(options = {}) {
+    this.options = options
+
     Object.keys(localStorage).forEach(key => {
       let value = localStorage.getItem(key)
       this.addItem(new LocalStorifyEntry({ key, value }))
@@ -49,20 +51,20 @@ export class LocalStorify {
     // add to index
     this.index[entry.key] = entry
 
-    console.log('adding entry', entry)
+    this.options.debug && console.log('adding entry', entry)
   }
 
   shrinkTo(targetSize) {
     let items = this.items.sort((a, b) => a.accessed < b.accessed ? -1 : (a.accessed > b.accessed ? 1 : 0))
     let attemptsRemaining = 1000
 
-    console.log('removing from sorted array', items.map(i => i.key))
+    this.options.debug && console.log('removing from sorted array', items.map(i => i.key))
 
-    console.log('shrinking to', targetSize, 'from', this.size)
+    this.options.debug && console.log('shrinking to', targetSize, 'from', this.size)
     while (this.size > targetSize && attemptsRemaining) {
       let orphan = this.items.pop()
       delete this.index[orphan.key]
-      console.log('removing entry', orphan)
+      this.options.debug && console.log('removing entry', orphan)
 
       this.collected++
       this.attemptsRemaining--
@@ -74,7 +76,7 @@ export class LocalStorify {
     let targetSpace = LIMIT_LOCALSTORAGE - entry.size
     let hasEnoughSpace = this.size < targetSpace
 
-    console.log({
+    this.options.debug && console.log({
       LIMIT_LOCALSTORAGE,
       targetSpace,
       entrySize: entry.size,
@@ -82,7 +84,7 @@ export class LocalStorify {
     })
 
     if (targetSpace < 0) {
-      console.log('not enough space to add item', entry)
+      this.options.debug && console.log('not enough space to add item', entry)
 
       return false
     }
@@ -98,6 +100,10 @@ export class LocalStorify {
 
   getItem(key) {
     return localStorage.getItem(key)
+  }
+
+  removeItem(key) {
+    return localStorage.removeItem(key)
   }
 
   clear() {
