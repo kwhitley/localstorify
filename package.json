@@ -1,6 +1,6 @@
 {
-  "name": "@kwhitley/localstorify",
-  "version": "0.2.0",
+  "name": "localstorify",
+  "version": "0.2.1",
   "description": "localStorage that avoids storage limit failures",
   "keywords": [
     "localStorage",
@@ -13,9 +13,10 @@
     "prebuild": "rm -rf build",
     "build": "babel src --ignore '**/*.spec.js' --out-dir build -d",
     "test": "jest --watch",
-    "release:major": "yarn build && release --major --src=build --push --public",
-    "release:minor": "yarn build && release --minor --src=build --push --public",
-    "release:patch": "yarn build && release --patch --src=build --push --public"
+    "release": "yarn build && release --src=build --push",
+    "release:major": "yarn release - --major",
+    "release:minor": "yarn release - --minor",
+    "release:patch": "yarn release - --patch"
   },
   "author": "Kevin R. Whitley <krwhitley@gmail.com>",
   "license": "MIT",
@@ -33,7 +34,7 @@
     "@babel/plugin-proposal-class-properties": "^7.4.0",
     "@babel/plugin-transform-modules-commonjs": "^7.4.0",
     "@babel/preset-env": "^7.4.2",
-    "@kwhitley/yarn-release": "^1.4.0",
+    "yarn-release": "^1.9.2",
     "jest": "^24.7.1"
   }
 }

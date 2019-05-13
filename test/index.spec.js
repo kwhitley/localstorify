@@ -1,8 +1,7 @@
 // test files
 import localStorify, { LocalStorify } from '../src/index.js'
 
-describe('@kwhitley/localstorify', () => {
-
+describe('localstorify', () => {
   describe('library exports', () => {
     test('default export is a function', () => {
       expect(typeof localStorify).toBe('object')
