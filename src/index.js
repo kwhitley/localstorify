@@ -63,7 +63,7 @@ export class LocalStorify {
     this.options.debug && console.log('shrinking to', targetSize, 'from', this.size)
     while (this.size > targetSize && attemptsRemaining) {
       let orphan = this.items.pop()
-      delete this.index[orphan.key]
+      removeItem(orphan.key)
       this.options.debug && console.log('removing entry', orphan)
 
       this.collected++
@@ -103,6 +103,7 @@ export class LocalStorify {
   }
 
   removeItem(key) {
+    delete this.index[key]
     return localStorage.removeItem(key)
   }
 
